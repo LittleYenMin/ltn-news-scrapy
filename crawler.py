@@ -12,6 +12,9 @@ class LtnSearchCrawler(scrapy.Spider):
             href = block.xpath('.//a[contains(@class, "tit")]/@href').get()
             content_url = '{base_url}{href}'.format(base_url=self.base_url, href=href)
             yield scrapy.Request(url=content_url, callback=self.parse_content)
+        a_next = response.xpath('//a[contains(@class, "p_next")]/@href').get()
+        if a_next:
+            yield scrapy.Request(url='https:{a_next}'.format(a_next=a_next), callback=self.parse)
 
     def parse_content(self, response):
         for body in response.xpath('//div[contains(@class, "articlebody")]'):
@@ -21,9 +24,10 @@ class LtnSearchCrawler(scrapy.Spider):
             content = ' '.join(contents)
             if len(content) > 300:
                 content = content[:300]
-            yield {
-                'url': response.url,
-                'title': title,
-                'date': view_time,
-                'content': content,
-            }
+            if response.url and title and view_time and content:
+                yield {
+                    'url': response.url,
+                    'title': title,
+                    'date': view_time,
+                    'content': content,
+                }
